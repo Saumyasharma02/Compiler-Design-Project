@@ -5,6 +5,7 @@
 
 extern int yylineno;
 extern FILE *yyin;
+extern char *yytext;
 
 void yyerror(const char* s);
 int yylex(void);
@@ -18,14 +19,13 @@ int yylex(void);
 
 /* Tokens with types */
 %token <num> NUMBER
-%token <id> IDENTIFIER STRING
+%token <id> IDENTIFIER STRING FILENAME
 
 %token INT VOID MAIN IF ELSE WHILE FOR PRINTF RETURN
 %token EQ ASSIGN NE LE GE LT GT
 %token PLUS MINUS MUL DIV
 %token SEMICOLON LPAREN RPAREN LBRACE RBRACE
 %token HASH INCLUDE DEFINE
-%token LT_SYM GT_SYM DOT_H
 
 /* Operator precedence */
 %left PLUS MINUS
@@ -53,6 +53,17 @@ preprocessor_directives_opt:
 preprocessor_directives:
     preprocessor_directives preprocessor_directive
     | preprocessor_directive
+    ;
+
+preprocessor_directive:
+    HASH INCLUDE LT FILENAME GT
+    {
+        printf("✅ Include directive: <%s>\n", $4);
+    }
+    | HASH DEFINE IDENTIFIER
+    {
+        printf("✅ Define directive: %s\n", $3);
+    }
     ;
 
 statements:
@@ -125,21 +136,12 @@ return_stmt:
     RETURN expression SEMICOLON
     ;
 
-preprocessor_directive:
-    HASH INCLUDE LT_SYM IDENTIFIER DOT_H GT_SYM
-    {
-        printf("✅ Include directive: <%s.h>\n", $4);
-    }
-    | HASH DEFINE IDENTIFIER
-    {
-        printf("✅ Define directive: %s\n", $3);
-    }
-    ;
+
 
 %%
 
 void yyerror(const char* s) {
-    fprintf(stderr, "❌ Syntax Error: %s at line %d\n", s, yylineno);
+    fprintf(stderr, "❌ Syntax Error: %s at line %d,yytext:%s\n", s, yylineno,yytext);
 }
 
 int main(int argc, char **argv) {
