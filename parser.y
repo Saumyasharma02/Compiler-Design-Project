@@ -1,4 +1,3 @@
-
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,6 +22,7 @@ int yylex(void);
 %token <id> IDENTIFIER STRING FILENAME
 
 %token INT VOID MAIN IF ELSE WHILE FOR PRINTF SCANF RETURN
+%token INC DEC
 %token EQ ASSIGN NE LE GE LT GT
 %token PLUS MINUS MUL DIV
 %token SEMICOLON LPAREN RPAREN LBRACE RBRACE COMMA
@@ -79,6 +79,7 @@ statement:
     | input_stmt SEMICOLON
     | if_stmt
     | while_stmt
+    | increment SEMICOLON
     | return_stmt
     ;
 
@@ -135,11 +136,22 @@ input_stmt:
 if_stmt:
     IF LPAREN expression RPAREN LBRACE statements RBRACE
     | IF LPAREN expression RPAREN LBRACE statements RBRACE ELSE LBRACE statements RBRACE
+    | IF LPAREN expression RPAREN LBRACE statements RBRACE ELSE if_stmt
     ;
 
 while_stmt:
     WHILE LPAREN expression RPAREN LBRACE statements RBRACE
     ;
+
+increment:
+      IDENTIFIER INC {
+          printf("✅ Increment: %s++\n", $1);
+      }
+    | IDENTIFIER DEC {
+          printf("✅ Decrement: %s--\n", $1);
+      }
+;
+
 
 return_stmt:
     RETURN expression SEMICOLON
