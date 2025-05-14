@@ -19,6 +19,9 @@ extern int yylineno;
 "printf"    { return PRINTF; }
 "scanf"     { return SCANF; }
 
+"++"        { return INC; }
+"--"        { return DEC; }
+
 "=="        { return EQ; }
 "="         { return ASSIGN; }
 "!="        { return NE; }
