@@ -1,3 +1,4 @@
+
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,11 +22,11 @@ int yylex(void);
 %token <num> NUMBER
 %token <id> IDENTIFIER STRING FILENAME
 
-%token INT VOID MAIN IF ELSE WHILE FOR PRINTF RETURN
+%token INT VOID MAIN IF ELSE WHILE FOR PRINTF SCANF RETURN
 %token EQ ASSIGN NE LE GE LT GT
 %token PLUS MINUS MUL DIV
-%token SEMICOLON LPAREN RPAREN LBRACE RBRACE
-%token HASH INCLUDE DEFINE
+%token SEMICOLON LPAREN RPAREN LBRACE RBRACE COMMA
+%token HASH INCLUDE DEFINE AMPERSAND
 
 /* Operator precedence */
 %left PLUS MINUS
@@ -75,6 +76,7 @@ statement:
       declaration SEMICOLON
     | assignment SEMICOLON
     | print_stmt SEMICOLON
+    | input_stmt SEMICOLON
     | if_stmt
     | while_stmt
     | return_stmt
@@ -113,13 +115,20 @@ expression:
     ;
 
 print_stmt:
-      PRINTF LPAREN IDENTIFIER RPAREN
-    {
-        printf("✅ Print identifier: %s\n", $3);
-    }
-    | PRINTF LPAREN STRING RPAREN
+      PRINTF LPAREN STRING RPAREN
     {
         printf("✅ Print string: %s\n", $3);
+    }
+    | PRINTF LPAREN STRING COMMA IDENTIFIER RPAREN
+    {
+         printf("✅ Print formatted string: %s with variable: %s\n", $3, $5);
+    }
+    ;
+
+input_stmt:
+    SCANF LPAREN STRING COMMA AMPERSAND IDENTIFIER RPAREN
+    {
+        printf("✅ Scanf input for variable: %s\n", $6);
     }
     ;
 
