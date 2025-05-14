@@ -1,25 +1,21 @@
 #include <stdio.h>
 
 int main() {
-    int num;
-    int i;
-    i=0;
+    int x;
+    int y;
+    y=5;
 
     printf("Enter a number: ");
-    scanf("%d", &num);
+    scanf("%d", &x);
 
-    if (num > 0) {
-        printf("You entered a positive number\n");
-    } else if (num < 0) {
-        printf("You entered a negative number\n");
+    if (x > y) {
+        printf("x is greater than y\n");
     } else {
-        printf("You entered zero\n");
+        printf("x is less than or equal to y\n");
     }
 
-    printf("Counting from 1 to %d\n", num);
-
-    while (i < num) {
-        i++;
+    int i;
+    for (i = 0; i < x; i++) {
         printf("%d\n", i);
     }
 
