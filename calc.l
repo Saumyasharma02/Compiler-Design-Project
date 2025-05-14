@@ -17,6 +17,7 @@ extern int yylineno;
 "for"       { return FOR; }
 "return"    { return RETURN; }
 "printf"    { return PRINTF; }
+"scanf"     { return SCANF; }
 
 "=="        { return EQ; }
 "="         { return ASSIGN; }
@@ -35,6 +36,9 @@ extern int yylineno;
 ")"         { return RPAREN; }
 "{"         { return LBRACE; }
 "}"         { return RBRACE; }
+
+"&"         { return AMPERSAND; }
+","         {return COMMA; }
 
 "#"         { return HASH; }
 "include"   { return INCLUDE; }
