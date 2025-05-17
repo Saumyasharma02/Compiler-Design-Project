@@ -1,4 +1,5 @@
 %{
+#include "symbol_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,17 +33,27 @@ int yylex(void);
 %left PLUS MINUS
 %left MUL DIV
 %nonassoc EQ NE LT LE GT GE
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE 
 
 /* Non-terminal types */
 %type <num> expression
+%type <id> type_specifier
+%type <num> parameter_list_opt parameter_list
+%type <num>  argument_list_opt argument_list
+%type <num> function_call
+
 
 
 %%
 
 program:
-    preprocessor_directives_opt INT MAIN LPAREN RPAREN LBRACE statements RBRACE
+    preprocessor_directives_opt
+    function_definition
+    INT MAIN LPAREN RPAREN LBRACE statements RBRACE
     {
         printf("✅ Program parsed successfully!\n");
+        print_symbol_table();
     }
     ;
 
@@ -67,6 +78,77 @@ preprocessor_directive:
     }
     ;
 
+
+type_specifier:
+      INT  { $$ = "int"; }
+    | VOID { $$ = "void"; }
+    ;
+
+
+parameter_list_opt:
+      parameter_list       { $$ = $1; }
+    | /* empty */          { $$ = 0; }
+    ;
+
+parameter_list:
+      parameter                    { $$ = 1; }
+    | parameter_list COMMA parameter { $$ = $1 + 1; }
+    ;
+
+
+parameter:
+      type_specifier IDENTIFIER
+    ;
+
+function_definition:
+      type_specifier IDENTIFIER LPAREN parameter_list_opt RPAREN compound_statement
+    {
+        if (symbol_exists($2)) {
+            yyerror("❌ Function already declared");
+        } else {
+            int param_count = $4;  // $4 should return number of parameters
+            insert_function($2, $1, param_count);
+            printf("✅ Function defined: %s with %d params\n", $2, param_count);
+        }
+    }
+;
+
+
+compound_statement:
+      LBRACE statements RBRACE
+;
+
+function_call:
+    IDENTIFIER LPAREN argument_list_opt RPAREN
+    {
+        if (!symbol_exists($1)) {
+            yyerror("❌ Call to undefined function");
+        } else {
+            Symbol *f = get_symbol($1);
+            if (!f->is_function) {
+                yyerror("❌ Identifier is not a function");
+            } else if (f->param_count != $3) {
+                yyerror("❌ Argument count mismatch in function call");
+            } else {
+                printf("✅ Function call: %s with %d args\n", $1, $3);
+            }
+        }
+        $$ = 0;
+    }
+    ;
+
+argument_list_opt:
+      argument_list { $$ = $1; }
+    | /* empty */   { $$ = 0; }
+    ;
+
+argument_list:
+      expression               { $$ = 1; }
+    | argument_list COMMA expression { $$ = $1 + 1; }
+    ;
+
+
+
 statements:
     statements statement
     | /* empty */
@@ -79,25 +161,41 @@ statement:
     | input_stmt SEMICOLON
     | if_stmt
     | while_stmt
+    | for_stmt
     | increment SEMICOLON
     | return_stmt
+    | function_call SEMICOLON 
     ;
 
 declaration:
     INT IDENTIFIER
     {
-        printf("✅ Declaration: %s\n", $2);
-        
+        if (symbol_exists($2)) {
+            yyerror("❌ Redeclaration of variable");
+        } else {
+            insert_symbol($2, "int");  // Insert with the type "int"
+            declare_symbol($2);
+            printf("✅ Declaration: %s of type int\n", $2);
+        }
     }
-    ;
+;
+
+
 
 assignment:
     IDENTIFIER ASSIGN expression
     {
-        printf("✅ Assignment: %s = (expression)\n", $1);
-        
+        // Check if the symbol is declared in the symbol table
+        if (!symbol_exists($1)) {
+            yyerror("❌ Assignment to undeclared variable");
+        } else {
+            // Optional: Type checking can go here (if you store types in the symbol table)
+            printf("✅ Assignment: %s = (expression)\n", $1);
+        }
     }
-    ;
+;
+
+
 
 expression:
       expression PLUS expression
@@ -113,6 +211,7 @@ expression:
     | LPAREN expression RPAREN { $$ = $2; }
     | NUMBER { $$ = $1; }
     | IDENTIFIER { $$ = 0; /* Treat identifiers as dummy 0 */ }
+    | function_call { $$ = 0; } 
     ;
 
 print_stmt:
@@ -134,14 +233,22 @@ input_stmt:
     ;
 
 if_stmt:
-    IF LPAREN expression RPAREN LBRACE statements RBRACE
-    | IF LPAREN expression RPAREN LBRACE statements RBRACE ELSE LBRACE statements RBRACE
-    | IF LPAREN expression RPAREN LBRACE statements RBRACE ELSE if_stmt
+    IF LPAREN expression RPAREN statement %prec LOWER_THAN_ELSE
+    | IF LPAREN expression RPAREN statement ELSE statement
     ;
+
 
 while_stmt:
     WHILE LPAREN expression RPAREN LBRACE statements RBRACE
     ;
+
+for_stmt:
+    FOR LPAREN assignment SEMICOLON expression SEMICOLON increment RPAREN LBRACE statements RBRACE
+    {
+        printf("✅ For loop parsed\n");
+    }
+;
+
 
 increment:
       IDENTIFIER INC {
