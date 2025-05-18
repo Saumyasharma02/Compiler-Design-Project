@@ -74,7 +74,7 @@ preprocessor_directive:
     }
     | HASH DEFINE IDENTIFIER
     {
-        printf("✅ Define directive: %s\n", $3);
+        printf("Define directive: %s\n", $3);
     }
     ;
 
@@ -104,11 +104,11 @@ function_definition:
       type_specifier IDENTIFIER LPAREN parameter_list_opt RPAREN compound_statement
     {
         if (symbol_exists($2)) {
-            yyerror("❌ Function already declared");
+            yyerror("Function already declared");
         } else {
             int param_count = $4;  // $4 should return number of parameters
             insert_function($2, $1, param_count);
-            printf("✅ Function defined: %s with %d params\n", $2, param_count);
+            printf("Function defined: %s with %d params\n", $2, param_count);
         }
     }
 ;
@@ -122,15 +122,15 @@ function_call:
     IDENTIFIER LPAREN argument_list_opt RPAREN
     {
         if (!symbol_exists($1)) {
-            yyerror("❌ Call to undefined function");
+            yyerror("Call to undefined function");
         } else {
             Symbol *f = get_symbol($1);
             if (!f->is_function) {
-                yyerror("❌ Identifier is not a function");
+                yyerror("Identifier is not a function");
             } else if (f->param_count != $3) {
-                yyerror("❌ Argument count mismatch in function call");
+                yyerror("Argument count mismatch in function call");
             } else {
-                printf("✅ Function call: %s with %d args\n", $1, $3);
+                printf("Function call: %s with %d args\n", $1, $3);
             }
         }
         $$ = 0;
@@ -171,11 +171,11 @@ declaration:
     INT IDENTIFIER
     {
         if (symbol_exists($2)) {
-            yyerror("❌ Redeclaration of variable");
+            yyerror("Redeclaration of variable");
         } else {
             insert_symbol($2, "int");  // Insert with the type "int"
             declare_symbol($2);
-            printf("✅ Declaration: %s of type int\n", $2);
+            printf("Declaration: %s of type int\n", $2);
         }
     }
 ;
@@ -187,10 +187,10 @@ assignment:
     {
         // Check if the symbol is declared in the symbol table
         if (!symbol_exists($1)) {
-            yyerror("❌ Assignment to undeclared variable");
+            yyerror("Assignment to undeclared variable");
         } else {
             // Optional: Type checking can go here (if you store types in the symbol table)
-            printf("✅ Assignment: %s = (expression)\n", $1);
+            printf("Assignment: %s = (expression)\n", $1);
         }
     }
 ;
@@ -217,18 +217,18 @@ expression:
 print_stmt:
       PRINTF LPAREN STRING RPAREN
     {
-        printf("✅ Print string: %s\n", $3);
+        printf("Print string: %s\n", $3);
     }
     | PRINTF LPAREN STRING COMMA IDENTIFIER RPAREN
     {
-         printf("✅ Print formatted string: %s with variable: %s\n", $3, $5);
+         printf("Print formatted string: %s with variable: %s\n", $3, $5);
     }
     ;
 
 input_stmt:
     SCANF LPAREN STRING COMMA AMPERSAND IDENTIFIER RPAREN
     {
-        printf("✅ Scanf input for variable: %s\n", $6);
+        printf("Scanf input for variable: %s\n", $6);
     }
     ;
 
@@ -245,17 +245,17 @@ while_stmt:
 for_stmt:
     FOR LPAREN assignment SEMICOLON expression SEMICOLON increment RPAREN LBRACE statements RBRACE
     {
-        printf("✅ For loop parsed\n");
+        printf("For loop parsed\n");
     }
 ;
 
 
 increment:
       IDENTIFIER INC {
-          printf("✅ Increment: %s++\n", $1);
+          printf("Increment: %s++\n", $1);
       }
     | IDENTIFIER DEC {
-          printf("✅ Decrement: %s--\n", $1);
+          printf("Decrement: %s--\n", $1);
       }
 ;
 
@@ -269,18 +269,18 @@ return_stmt:
 %%
 
 void yyerror(const char* s) {
-    fprintf(stderr, "❌ Syntax Error: %s at line %d,yytext:%s\n", s, yylineno,yytext);
+    fprintf(stderr, "Syntax Error: %s at line %d,yytext:%s\n", s, yylineno,yytext);
 }
 
 int main(int argc, char **argv) {
     if (argc > 1) {
         yyin = fopen(argv[1], "r");
         if (!yyin) {
-            perror("❌ Error opening file");
+            perror("Error opening file");
             return 1;
         }
     } else {
-        fprintf(stderr, "❌ Usage: %s <source_file>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <source_file>\n", argv[0]);
         return 1;
     }
 
