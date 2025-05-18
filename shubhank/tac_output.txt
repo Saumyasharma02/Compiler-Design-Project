@@ -1,0 +1,12 @@
+Three-Address Code:
+func main
+i: declare int
+a: declare int
+t0 = 10 = 
+a = t0 = 
+sum: declare int
+t1 = 0 = 
+sum = t1 = 
+t2 = a * sum
+i = t2 = 
+endfunc main
