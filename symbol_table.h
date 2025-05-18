@@ -5,6 +5,8 @@ typedef struct Symbol {
     char *name;
     int declared;  // 1 if declared, 0 if not
     char *type;
+    int is_function;          // NEW: 1 if symbol is a function
+    int param_count; 
     struct Symbol *next;
 } Symbol;
 
@@ -22,5 +24,9 @@ void declare_symbol(char *name);
 
 // Function to print the symbol table
 void print_symbol_table();
+
+void insert_function(char *name, char *return_type, int param_count);
+
+Symbol* get_symbol(char *name);
 
 #endif
