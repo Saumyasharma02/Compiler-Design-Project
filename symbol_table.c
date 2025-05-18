@@ -11,6 +11,8 @@ Symbol* create_symbol(char *name, char *type) {
     new_symbol->name = strdup(name);
     new_symbol->type = strdup(type);  // Store the type of the symbol
     new_symbol->declared = 0;  // Initially not declared
+    new_symbol->is_function = 0;
+    new_symbol->param_count = 0;
     new_symbol->next = NULL;
     return new_symbol;
 }
@@ -58,3 +60,23 @@ void print_symbol_table() {
     }
 }
 
+void insert_function(char *name, char *return_type, int param_count) {
+    if (symbol_exists(name)) return;  // Prevent duplicate insertions
+    Symbol *f = create_symbol(name, return_type);
+    f->is_function = 1;
+    f->param_count = param_count;
+    f->declared = 1;
+    f->next = symbol_table;
+    symbol_table = f;
+}
+
+Symbol* get_symbol(char *name) {
+    Symbol *current = symbol_table;
+    while (current != NULL) {
+        if (strcmp(current->name, name) == 0) {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
