@@ -816,14 +816,6 @@ argument_list:
 
 %%
 
-void yyerror(const char* s) {
-<<<<<<< HEAD
-    fprintf(stderr, "❌ Error: %s at line %d, near '%s'\n", s, yylineno, yytext);
-=======
-    fprintf(stderr, "Syntax Error: %s at line %d,yytext:%s\n", s, yylineno,yytext);
->>>>>>> e71f6e71b3ec5fe5435cecc13b3fff3a2a5ab90c
-}
-
 int main(int argc, char **argv) {
     if (argc > 1) {
         yyin = fopen(argv[1], "r");
