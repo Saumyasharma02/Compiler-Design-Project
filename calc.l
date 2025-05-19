@@ -49,9 +49,9 @@ extern int yylineno;
 
 \"[^\"]*\"  { yylval.id = strdup(yytext); return STRING; }
 
-[0-9]+                  { yylval.num = atoi(yytext); return NUMBER; }
+[0-9]+                        { yylval.num = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z0-9_]*[.][h]  { yylval.id = strdup(yytext); return FILENAME; }
-[a-zA-Z_][a-zA-Z0-9_]* { yylval.id = strdup(yytext); return IDENTIFIER; }
+[a-zA-Z_][a-zA-Z0-9_]*        { yylval.id = strdup(yytext); return IDENTIFIER; }
 
 [ \t\r\n]+              { /* skip whitespace */ }
 
