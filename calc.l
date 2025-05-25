@@ -10,6 +10,7 @@ extern int yylineno;
 
 "int"       { return INT; }
 "void"      { return VOID; }
+"float"     { return FLOAT; }
 "main"      { return MAIN; }
 "if"        { return IF; }
 "else"      { return ELSE; }
@@ -49,6 +50,8 @@ extern int yylineno;
 
 \"[^\"]*\"  { yylval.id = strdup(yytext); return STRING; }
 
+
+[0-9]+"."[0-9]*                      { yylval.fnum = atof(yytext); return FLOAT_NUMBER; }
 [0-9]+                  { yylval.num = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z0-9_]*[.][h]  { yylval.id = strdup(yytext); return FILENAME; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.id = strdup(yytext); return IDENTIFIER; }
