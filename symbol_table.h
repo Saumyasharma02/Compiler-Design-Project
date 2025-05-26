@@ -1,3 +1,4 @@
+
 #ifndef SYMBOL_TABLE_H
 #define SYMBOL_TABLE_H
 
@@ -9,12 +10,12 @@ typedef struct Parameter {
 
 typedef struct Symbol {
     char* name;
-    char* type; // "int", "void", or "function"
-    int declared; // 1 if declared, 0 if not
-    Parameter* params; // For functions
-    int param_count; // Number of parameters
+    char* type; 
+    int declared; 
+    Parameter* params; 
+    int param_count; 
     struct Symbol* next;
-    struct Symbol* scope; // For scoping (linked list of symbols in current scope)
+    struct Symbol* scope; 
 } Symbol;
 
 extern Symbol* symbol_table;
