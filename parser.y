@@ -1,3 +1,4 @@
+
 %{
 #include "symbol_table.h"
 #include <stdio.h>
@@ -45,46 +46,49 @@ void emit_tac(char* result, char* op, char* arg1, char* arg2) {
     tac_count++;
 }
 
-void print_single_tac(FILE *out, TAC *t) {
-    if (t->op && strcmp(t->op, "func") == 0) {
-        fprintf(out, "func %s\n", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "endfunc") == 0) {
-        fprintf(out, "endfunc %s\n", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "label") == 0) {
-        fprintf(out, "%s: label\n", t->result ? t->result : "");
-    } else if (t->op && strcmp(t->op, "goto") == 0) {
-        fprintf(out, "goto %s\n", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "ifz") == 0) {
-        fprintf(out, "ifz %s %s\n", t->arg1 ? t->arg1 : "", t->arg2 ? t->arg2 : "");
-    } else if (t->op && strcmp(t->op, "printf") == 0) {
-        fprintf(out, "printf %s%s%s\n", t->arg1 ? t->arg1 : "",
-                t->arg2 ? " " : "", t->arg2 ? t->arg2 : "");
-    } else if (t->op && strcmp(t->op, "scanf") == 0) {
-        fprintf(out, "%s = scanf %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "return") == 0) {
-        fprintf(out, "return %s\n", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "declare") == 0) {
-        fprintf(out, "%s: declare %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
-    } else if (t->op && strcmp(t->op, "=") == 0 && t->arg2 == NULL) {
-        // Simple assignment like t0 = 10
-        fprintf(out, "%s = %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
-    } else if (t->result) {
-        // General format: result = arg1 op arg2
-        fprintf(out, "%s = %s %s %s\n", t->result ? t->result : "",
-                t->arg1 ? t->arg1 : "", t->op ? t->op : "",
-                t->arg2 ? t->arg2 : "");
-    } else {
-        // Fallback
-        fprintf(out, "%s %s %s\n", t->arg1 ? t->arg1 : "",
-                t->op ? t->op : "", t->arg2 ? t->arg2 : "");
-    }
-}
-
-
 void print_tac() {
     printf("\nThree-Address Code:\n");
     for (int i = 0; i < tac_count; i++) {
-        print_single_tac(stdout, &tac_list[i]);
+        TAC *t = &tac_list[i];
+        if (t->op && strcmp(t->op, "func") == 0) {
+            printf("func %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "endfunc") == 0) {
+            printf("endfunc %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "label") == 0) {
+            printf("%s: label\n", t->result ? t->result : "");
+        } else if (t->op && strcmp(t->op, "goto") == 0) {
+            printf("goto %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "ifz") == 0) {
+            printf("ifz %s %s\n", t->arg1 ? t->arg1 : "", t->arg2 ? t->arg2 : "");
+        } else if (t->op && strcmp(t->op, "printf") == 0) {
+            printf("printf %s%s%s\n", t->arg1 ? t->arg1 : "",
+                   t->arg2 ? " " : "", t->arg2 ? t->arg2 : "");
+        } else if (t->op && strcmp(t->op, "scanf") == 0) {
+            printf("%s = scanf %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "return") == 0) {
+            printf("return %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "declare") == 0) {
+            printf("%s: declare %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
+        } else if (t->result) {
+            // Handle assignments and operations carefully to avoid extra '='
+            if (t->op == NULL || strlen(t->op) == 0) {
+                // Simple assignment without operator
+                printf("%s = %s\n", t->result, t->arg1 ? t->arg1 : "");
+            } else if (strcmp(t->op, "=") == 0) {
+                // Assignment operator, print as simple assignment
+                printf("%s = %s\n", t->result, t->arg1 ? t->arg1 : "");
+            } else if (t->arg2 == NULL || strlen(t->arg2) == 0) {
+                // Unary operation
+                printf("%s = %s %s\n", t->result, t->op, t->arg1 ? t->arg1 : "");
+            } else {
+                // Binary operation
+                printf("%s = %s %s %s\n", t->result, t->arg1 ? t->arg1 : "",
+                       t->op, t->arg2 ? t->arg2 : "");
+            }
+        } else {
+            printf("%s %s %s\n", t->arg1 ? t->arg1 : "",
+                   t->op ? t->op : "", t->arg2 ? t->arg2 : "");
+        }
     }
 }
 
@@ -97,30 +101,65 @@ void print_tac_to_file(const char *filename) {
 
     fprintf(file, "Three-Address Code:\n");
     for (int i = 0; i < tac_count; i++) {
-        print_single_tac(file, &tac_list[i]);
+        TAC *t = &tac_list[i];
+        if (t->op && strcmp(t->op, "func") == 0) {
+            fprintf(file, "func %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "endfunc") == 0) {
+            fprintf(file, "endfunc %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "label") == 0) {
+            fprintf(file, "%s: label\n", t->result ? t->result : "");
+        } else if (t->op && strcmp(t->op, "goto") == 0) {
+            fprintf(file, "goto %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "ifz") == 0) {
+            fprintf(file, "ifz %s %s\n", t->arg1 ? t->arg1 : "", t->arg2 ? t->arg2 : "");
+        } else if (t->op && strcmp(t->op, "printf") == 0) {
+            fprintf(file, "printf %s%s%s\n", t->arg1 ? t->arg1 : "",
+                    t->arg2 ? " " : "", t->arg2 ? t->arg2 : "");
+        } else if (t->op && strcmp(t->op, "scanf") == 0) {
+            fprintf(file, "%s = scanf %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "return") == 0) {
+            fprintf(file, "return %s\n", t->arg1 ? t->arg1 : "");
+        } else if (t->op && strcmp(t->op, "declare") == 0) {
+            fprintf(file, "%s: declare %s\n", t->result ? t->result : "", t->arg1 ? t->arg1 : "");
+        } else if (t->result) {
+            if (t->op == NULL || strlen(t->op) == 0) {
+                fprintf(file, "%s = %s\n", t->result, t->arg1 ? t->arg1 : "");
+            } else if (strcmp(t->op, "=") == 0) {
+                fprintf(file, "%s = %s\n", t->result, t->arg1 ? t->arg1 : "");
+            } else if (t->arg2 == NULL || strlen(t->arg2) == 0) {
+                fprintf(file, "%s = %s %s\n", t->result, t->op, t->arg1 ? t->arg1 : "");
+            } else {
+                fprintf(file, "%s = %s %s %s\n", t->result, t->arg1 ? t->arg1 : "",
+                        t->op, t->arg2 ? t->arg2 : "");
+            }
+        } else {
+            fprintf(file, "%s %s %s\n", t->arg1 ? t->arg1 : "",
+                    t->op ? t->op : "", t->arg2 ? t->arg2 : "");
+        }
     }
 
     fclose(file);
 }
 
 
-
-
 %}
 
 %union {
     int num;
+    float fnum;          
     char* id;
     struct { int value; char* type; char* id; } expr;
     struct { char* type; } type_spec;
     struct { char* label1; char* label2; char* label3; } labels;
 }
 
+
 %expect 1
 
+%token <fnum> FLOAT_NUMBER
 %token <num> NUMBER
 %token <id> IDENTIFIER STRING FILENAME
-%token INT VOID MAIN IF ELSE WHILE FOR PRINTF SCANF RETURN
+%token INT VOID FLOAT MAIN IF ELSE WHILE FOR PRINTF SCANF RETURN
 %token INC DEC EQ ASSIGN NE LE GE LT GT PLUS MINUS MUL DIV
 %token SEMICOLON LPAREN RPAREN LBRACE RBRACE COMMA
 %token HASH INCLUDE DEFINE AMPERSAND
@@ -200,44 +239,20 @@ declarations:
     ;
 
 declaration_item:
-    function_prototype
-    | function_definition
+    function_definition
+    
     ;
 
-function_prototype:
-    type_specifier IDENTIFIER LPAREN parameter_list RPAREN SEMICOLON
-    {
-        if (symbol_exists($2)) {
-            yyerror("Redeclaration of function");
-        } else {
-            insert_symbol($2, "function");
-            Symbol* func = lookup_symbol($2);
-            func->declared = 1;
-            func->type = strdup($1.type);
-            printf("✅ Function prototype declared: %s\n", $2);
-        }
-        free($2);
-        free($1.type);
-    }
-    | type_specifier IDENTIFIER LPAREN RPAREN SEMICOLON
-    {
-        if (symbol_exists($2)) {
-            yyerror("Redeclaration of function");
-        } else {
-            insert_symbol($2, "function");
-            Symbol* func = lookup_symbol($2);
-            func->declared = 1;
-            func->type = strdup($1.type);
-            printf("✅ Function prototype declared: %s\n", $2);
-        }
-        free($2);
-        free($1.type);
-    }
-    ;
 
 type_specifier:
     INT { $$.type = strdup("int"); }
     | VOID { $$.type = strdup("void"); }
+    | FLOAT { $$.type = strdup("float"); }
+    ;
+
+parameter_list_opt:
+    /* empty */
+    | parameter_list
     ;
 
 parameter_list:
@@ -248,17 +263,19 @@ parameter_list:
 parameter:
     type_specifier IDENTIFIER
     {
-        Symbol* func = symbol_table;
-        add_parameter(func, $2, $1.type);
-        insert_symbol($2, $1.type);
-        declare_symbol($2);
-        free($1.type);
+        if (symbol_exists($2)) {
+            yyerror("Redeclaration of parameter");
+        } else {
+            insert_symbol($2, $1.type);
+            printf("✅ Parameter declared: %s of type %s\n", $2, $1.type);
+        }
         free($2);
+        free($1.type);
     }
     ;
 
 function_definition:
-    type_specifier IDENTIFIER LPAREN parameter_list RPAREN LBRACE
+    type_specifier IDENTIFIER LPAREN parameter_list_opt RPAREN LBRACE
     {
         if (symbol_exists($2)) {
             yyerror("Redeclaration of function");
@@ -274,37 +291,13 @@ function_definition:
     }
     statements RBRACE
     {
-        emit_tac(NULL, "endfunc", $2, NULL);
-        printf("✅ Function defined: %s\n", $2);
+        emit_tac(NULL, "endfunc", current_function, NULL);
+        printf("✅ Function defined: %s\n", current_function);
         pop_scope();
         free(current_function);
         current_function = NULL;
-        free($2);
         free($1.type);
-    }
-    | type_specifier IDENTIFIER LPAREN RPAREN LBRACE
-    {
-        if (symbol_exists($2)) {
-            yyerror("Redeclaration of function");
-        } else {
-            insert_symbol($2, "function");
-            Symbol* func = lookup_symbol($2);
-            func->declared = 1;
-            func->type = strdup($1.type);
-            current_function = strdup($2);
-            emit_tac(NULL, "func", $2, NULL);
-        }
-        push_scope();
-    }
-    statements RBRACE
-    {
-        emit_tac(NULL, "endfunc", $2, NULL);
-        printf("✅ Function defined: %s\n", $2);
-        pop_scope();
-        free(current_function);
-        current_function = NULL;
         free($2);
-        free($1.type);
     }
     ;
 
@@ -435,7 +428,7 @@ if_stmt:
     ;
 
 declaration:
-    INT IDENTIFIER
+    type_specifier IDENTIFIER
     {
         if (symbol_exists($2)) {
             yyerror("Redeclaration of variable");
@@ -443,9 +436,10 @@ declaration:
             insert_symbol($2, "int");
             declare_symbol($2);
             printf("✅ Declaration: %s of type int\n", $2);
-            emit_tac($2, "declare", "int", NULL);
+            emit_tac($2, "declare", $1.type, NULL);
         }
         free($2);
+        free($1.type);
     }
     ;
 
@@ -467,14 +461,21 @@ assignment:
 expression:
     expression PLUS expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in addition");
         }
         char* temp = new_temp();
         emit_tac(temp, "+", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -482,14 +483,21 @@ expression:
     }
     | expression MINUS expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in subtraction");
         }
         char* temp = new_temp();
         emit_tac(temp, "-", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -497,14 +505,21 @@ expression:
     }
     | expression MUL expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
-            yyerror("Type mismatch in multiplication");
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
+            yyerror("Type mismatch in multipy");
         }
         char* temp = new_temp();
         emit_tac(temp, "*", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -512,14 +527,21 @@ expression:
     }
     | expression DIV expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in division");
         }
         char* temp = new_temp();
         emit_tac(temp, "/", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -527,14 +549,21 @@ expression:
     }
     | expression EQ expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
-            yyerror("Type mismatch in equality");
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
+            yyerror("Type mismatch in addition");
         }
         char* temp = new_temp();
         emit_tac(temp, "==", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -542,14 +571,21 @@ expression:
     }
     | expression NE expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in inequality");
         }
         char* temp = new_temp();
         emit_tac(temp, "!=", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -557,14 +593,21 @@ expression:
     }
     | expression LT expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in less than");
         }
         char* temp = new_temp();
         emit_tac(temp, "<", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -572,14 +615,21 @@ expression:
     }
     | expression GT expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
             yyerror("Type mismatch in greater than");
         }
         char* temp = new_temp();
         emit_tac(temp, ">", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -587,14 +637,21 @@ expression:
     }
     | expression LE expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
-            yyerror("Type mismatch in less than or equal");
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
+            yyerror("Type mismatch in less than equal");
         }
         char* temp = new_temp();
         emit_tac(temp, "<=", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -602,14 +659,21 @@ expression:
     }
     | expression GE expression
     {
-        if (strcmp($1.type, "int") != 0 || strcmp($3.type, "int") != 0) {
-            yyerror("Type mismatch in greater than or equal");
+        if ((strcmp($1.type, "int") != 0 && strcmp($1.type, "float") != 0) ||
+            (strcmp($3.type, "int") != 0 && strcmp($3.type, "float") != 0)) {
+            yyerror("Type mismatch in greater than equal");
         }
         char* temp = new_temp();
         emit_tac(temp, ">=", $1.id, $3.id);
-        $$.type = strdup("int");
+
+        if (strcmp($1.type, "float") == 0 || strcmp($3.type, "float") == 0) {
+            $$.type = strdup("float");
+        } 
+        else {
+            $$.type = strdup("int");
+        }
         $$.id = temp;
-        $$.value = 0;
+        
         free($1.type);
         free($3.type);
         free($1.id);
@@ -630,6 +694,16 @@ expression:
         $$.type = strdup("int");
         $$.id = temp;
         $$.value = $1;
+    }
+    | FLOAT_NUMBER
+    {
+        char* temp = new_temp();
+        char num_str[20];
+        sprintf(num_str, "%f", $1);
+        emit_tac(temp, "=", num_str, NULL);
+        $$.type = strdup("float");
+        $$.id = temp;
+        $$.value = 0;
     }
     | IDENTIFIER
     {
@@ -815,6 +889,10 @@ argument_list:
     ;
 
 %%
+
+void yyerror(const char* s) {
+    fprintf(stderr, "❌ Error: %s at line %d, near '%s'\n", s, yylineno, yytext);
+}
 
 int main(int argc, char **argv) {
     if (argc > 1) {
